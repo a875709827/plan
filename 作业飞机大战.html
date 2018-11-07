@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<link rel="stylesheet" type="text/css" href="zuoye.css"/>
+	</head>
+	<body>
+		<!--音乐-->
+		<audio src="img/logo.mp3" autoplay preload loop="loop" width="0" height="0" class="music1"></audio>
+		<b class="spans">积分：<span class="spanb"></span></b>
+		<!--开始界面-->
+		<div id="body_main" class="main">
+			<ul id="options" class="options">
+				<li value="1">超级困难</li>
+				<li value="2">非常困难</li>
+				<li value="3">比较困难</li>
+				<li value="4">特别简单</li>
+			</ul>
+		</div>
+		<!--loading界面-->
+		<div class="triangle-wrapper">
+		  <div class="triangle triangle-1"></div>
+		  <div class="triangle triangle-2"></div>
+		  <div class="triangle triangle-3"></div>
+		  <div class="triangle triangle-4"></div>
+		  <div class="triangle triangle-5"></div>
+		  <p class="triangle-loading">Loading</p>
+		</div>
+		<script>
+			(() => {
+			  const $triangles = document.querySelectorAll('.triangle')
+			  const template = `<svg class="triangle-svg" viewBox="0 0 140 141">
+			    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+			      <polygon class="triangle-polygon"  points="70 6 136 138 4 138"></polygon>
+			    </g>
+			  </svg>`
+			  Array.prototype.forEach.call($triangles, ($triangle, index) => {
+
+			    $triangle.innerHTML = template
+			  })
+			})()
+		</script>
+	</body>
+	<script type="text/javascript">
+//		1.引擎绑定点击事件，选择难度，生成动画（背景，logo，loading），开始游戏
+//		2.创建我的飞机,跟随鼠标移动,发射子弹,碰撞敌机死亡,
+//		3.创建子弹,跟随我的飞机顶部,碰到敌机子弹死亡,向上运动,碰到顶部死亡;
+//		4.随机创建敌机(位置大小),向下运动;碰到子弹死亡,超出底部死亡;
+//		5.作业:加入计分√;升级系统;我的飞机碰撞敌机死亡√;加入boss或者关卡√;
+//		创建全局函数(引擎)
+		var music=document.querySelector(".music1")
+		var music2=document.querySelector(".music2")
+		var ouend=0;
+		function Engine(){
+			
+//			获取所有li
+			this.li=document.getElementById("options").children;
+			this.main = document.getElementById("body_main");
+			this.loader=document.querySelector(".triangle-wrapper")
+			this.bss=document.querySelector(".spans")
+//			声明一个变量来存储点击当前li的value值
+			this.hard=1;
+//			执行init函数
+			this.init()
+		}
+//		为引擎绑定点击事件（创建init函数）
+		Engine.prototype.init=function(){
+//			保存当前this指向
+			var that=this;
+//			创建循环为所有li添加事件
+			for(var i=0;i<this.li.length;i++){
+//				给所有li添加点击事件
+				this.li[i].addEventListener("click",function(){
+//					保存点击的li的value值
+					that.hard=this.value;
+//					删除li
+					this.parentNode.remove();
+					that.load()
+				})
+			}
+		}
+//		创建进入游戏 loging界面函数
+		Engine.prototype.load=function(){
+//			用下面createDiv函数创建logo
+			this.logo=createDiv("logo");
+			this.loader.style.display="block";
+//			做背景图的动画
+			var k=0;
+//			创建定时器
+				setInterval(()=>{
+					this.main.style.backgroundPositionY=(k+=4)+"px"
+				},20)
+//			创建延时器准备开始游戏。
+			setTimeout(()=>{
+//				删除logo
+				this.logo.remove();
+//				删除loading
+				this.loader.style.display="none";
+//				执行创建Myplan函数创建我的飞机
+				this.gameStart()
+			},3000)
+		}
+//		创建我的飞机
+
+		Engine.prototype.gameStart=function(){
+//			执行我的飞机并传入body_main（this.main）
+			
+this.bss.style.display="block"
+			plane.init(this.main);
+//			创建子弹执行函数并传入用户选择的难度
+			plane.fire(this.hard)
+			setInterval(()=>{
+				if(Math.random()<0.7) new Enemy(this.main,1);
+			},1000)
+			setInterval(()=>{
+				if(Math.random()<0.5) new Enemy(this.main,2);
+			},2000)
+			setInterval(()=>{
+				if(Math.random()<0.2) new Enemy(this.main,3);
+			},2000)
+				setInterval(()=>{
+				if(Math.random()<1) new Enemy(this.main,4);
+			},60000)
+		}
+//		声明我的飞机的属性特征
+		var plane={
+//			创建我的飞机的函数
+			init:function(main){
+//				接收body_main（this.main）
+				music.src="img/rady2.mp3"
+				music.volume=0.3;
+				this.main=main;
+//				用createDiv函数在页面中创建我的飞机
+				this.ele=createDiv("myplane");
+//				设置我的飞机初始left位置
+				this.ele.style.left = (this.main.offsetWidth - this.ele.offsetWidth)/2 + "px";
+//				设置我的飞机初始bottom位置
+				this.ele.style.bottom=0;
+//				执行动画
+				this.move();
+			},//记得逗号 ！！！！！！！！！！
+//			创建我的飞机移动函数
+			move:function(){
+//				存储this指向
+				var that=this;
+//				给document添加鼠标移动事件
+				document.addEventListener("mousemove",function(eve){
+					
+					var e=eve||window.event
+//					设置我的飞机的left和top值==鼠标跟随
+					var l=e.clientX-that.ele.offsetWidth/2;
+					var t=e.clientY-that.ele.offsetHeight/2;
+//					边界限定上、左右
+//					if(l<0)l=0;
+					if(t<0)t=0;
+//					if(l>that.main.offsetWidth-that.ele.offsetWidth){
+//						l=hat.main.offsetWidth-that.ele.offsetWidth;
+//					}
+//					不限定右边框右bug
+					that.ele.style.left=l+"px";
+					that.ele.style.top=t+"px";
+				})
+			},
+//			创建子弹函数，接收难度值
+			fire:function(type){
+//				创建子弹实现开火
+				var t=500;
+//				判断当前难度，决定子弹频率
+				switch(type){
+					case 1:t=500;break;
+					case 2:t=350;break;
+					case 3:t=250;break;
+					case 4:t=150;break;
+				}
+//				创建定时器不断开火
+				setInterval(()=>{
+//					执行创建子弹,并保存每个子弹
+					if(ouend<=10000){
+						this.aBullet.push(new Bullet(0))
+					}else if(ouend>10000&&ouend<=20000){
+						this.aBullet.push(new Bullet(21))
+						this.aBullet.push(new Bullet(-21))
+					}else if(ouend>20000&&ouend<=30000){
+						this.aBullet.push(new Bullet(0))
+						this.aBullet.push(new Bullet(35))
+						this.aBullet.push(new Bullet(-35))
+					}else if(ouend>30000&&ouend<=70000){
+						this.aBullet.push(new Bullet(25))
+						this.aBullet.push(new Bullet(0))
+						this.aBullet.push(new Bullet(-25))
+						this.aBullet.push(new Bullet(40))
+						this.aBullet.push(new Bullet(-40))
+					}else if(ouend>70000){
+						this.aBullet.push(new Bullet(20))
+						this.aBullet.push(new Bullet(0))
+						this.aBullet.push(new Bullet(-20))
+						this.aBullet.push(new Bullet(60))
+						this.aBullet.push(new Bullet(-60))
+						this.aBullet.push(new Bullet(-40))
+						this.aBullet.push(new Bullet(40))
+					}
+				},t)
+			},
+//			创建一个数组保存子弹
+			aBullet:[],
+			die:function(){
+				plane.ele.style.backgroundImage = "url(img/blow6.gif)";	
+				setTimeout(()=>{
+					
+					plane.ele.remove();
+					alert("原地爆炸！！点击重新开始...");
+					location.reload();
+				},800)
+			}
+		}
+//		创建子弹实体函数
+		function Bullet(a){
+			this.init(a);
+			if(a==0||a==21){
+				
+				this.zdmusic()
+			}
+		}
+//		原型写法创建
+		Bullet.prototype={
+//			???
+			constructor:Bullet,
+//			创建子弹并定位初始位置
+				
+				init:function(a){
+					
+	//				创建子弹
+					
+					this.ele=createDiv("bullet");
+	//				定位初始位置
+					this.ele.style.left=plane.ele.offsetLeft+plane.ele.offsetWidth/2-this.ele.offsetWidth/2+a+"px";
+					this.ele.style.top=plane.ele.offsetTop-this.ele.offsetHeight+15+"px";
+	//				执行子弹运动函数
+					this.move();
+				},
+				zdmusic:function(){
+					this.zdmusic=document.createElement("audio")
+					this.zdmusic.src="img/zid.mp3"
+					this.zdmusic.play()
+					setTimeout(()=>{
+						this.zdmusic.pause()
+						this.zdmusic.remove();
+					},400)
+				},
+	//			创建子弹运动函数
+				move:function(){
+					var speed=15;
+					this.ele.timer=setInterval(()=>{
+						if(this.ele.offsetTop<10){
+	//						执行子弹死亡函数
+							this.die();
+						}else{
+							this.ele.style.top=this.ele.offsetTop-speed+"px";
+						}
+					},30)
+				},
+//			创建子弹死亡函数
+			die:function(){
+//				同时清除运动计时器
+				clearInterval(this.ele.timer)
+//				修改class,开启延时器,准备显示爆炸效果
+				this.ele.className = "bullet_die";
+				setTimeout(()=>{
+//					爆炸效果显示完,删除子弹元素
+					this.ele.remove();
+//					循环判断子弹是否消失,若消失则删除数组中对应的的值
+					for(var i=0;i<plane.aBullet.length;i++){
+						if(plane.aBullet[i].ele==this.ele){
+							plane.aBullet.splice(i,1)
+						}
+					}
+				},300)
+			}
+		}
+//		es6声明类来创建敌机
+		class Enemy{
+//			属性
+			constructor(main,type){
+				this.span=document.querySelector(".spanb")
+				this.main=main;
+				this.type=type;
+				this.init()
+				
+			}
+//			属性值
+			init(){
+				switch(this.type){
+					case 1:
+					this.name="enemy-small";
+					this.speed=10;
+					this.hp=7;
+					this.dieNum=1;
+					break;
+					case 2:
+					this.name="enemy-middle";
+					this.speed=5;
+					this.hp=15;
+					this.dieNum=2;
+					break;
+					case 3:
+					this.name="enemy-large";
+					this.speed=3;
+					this.hp=25;
+					this.dieNum=3;
+					break;
+					case 4:
+					this.name="enemy-boss";
+					this.speed=1;
+					this.hp=500;
+					this.dieNum=10;
+					break;
+				}
+				
+				this.ele=createDiv(this.name);
+				this.ele.style.top=-this.ele.offsetHeight+"px";
+				this.ele.style.left=random(0,this.main.offsetWidth-this.ele.offsetWidth)+"px"
+				this.move();
+			}
+			move(){
+				this.ele.timer = setInterval(()=>{
+					if(this.ele.offsetTop > this.main.offsetHeight + 100){
+						this.die()
+					}else{
+						this.ele.style.top = this.ele.offsetTop + this.speed + "px";
+//						敌机在运动,子弹也在运抵,子弹和敌机的碰撞检测
+						for(var i=0;i<plane.aBullet.length;i++){
+							if(plane.aBullet[i].ele.offsetLeft + plane.aBullet[i].ele.offsetWidth > this.ele.offsetLeft){
+								if(plane.aBullet[i].ele.offsetLeft < this.ele.offsetLeft + this.ele.offsetWidth){
+									if(plane.aBullet[i].ele.offsetTop+30 < this.ele.offsetTop + this.ele.offsetHeight){
+										if(plane.aBullet[i].ele.offsetTop + plane.aBullet[i].ele.offsetHeight > this.ele.offsetTop){
+											plane.aBullet[i].die();
+											this.hp--;
+											if(this.hp <= 0){
+												this.sheji();	
+												this.die()
+												
+												ouend+=this.dieNum*100
+											}
+											this.span.innerHTML=ouend
+										}
+									}
+								}
+							}
+						}
+						if(plane.ele.offsetLeft + plane.ele.offsetWidth-20 > this.ele.offsetLeft){
+							if(plane.ele.offsetLeft+20 < this.ele.offsetLeft + this.ele.offsetWidth){
+								if(plane.ele.offsetTop+20 < this.ele.offsetTop + this.ele.offsetHeight){
+									if(plane.ele.offsetTop + plane.ele.offsetHeight-20 > this.ele.offsetTop){
+										music.src="img/myplane.mp3"
+										music.loop=""
+										this.die()	
+										plane.die()
+									}
+								}
+							}
+						}
+					}
+					
+				},30)
+			}
+			sheji(){
+				this.djmusic=document.createElement("audio")
+				this.djmusic.src="img/diji.mp3"
+				this.djmusic.play()
+				setTimeout(()=>{
+					this.djmusic.pause()
+					this.djmusic.remove();
+				},500)
+			}
+			die(){
+				clearInterval(this.ele.timer);
+				this.ele.style.backgroundImage = "url(img/blow"+ this.type +".gif)";	
+				setTimeout(()=>{
+					this.ele.remove();
+				},800)
+				
+			}
+		}
+		function random(a,b){
+			return Math.round(Math.random()*(a-b)+b)
+		}
+//		创建全局createDiv节点插入元素函数
+		function createDiv(myclass){
+//			创建div	
+			var div = document.createElement("div");
+//			给div命名
+			div.className = myclass;
+//			将div插入到body_main中
+			document.getElementById("body_main").appendChild(div);
+//			返回创建的div
+			return div;
+		}
+		new Engine()
+	</script>
+</html>
